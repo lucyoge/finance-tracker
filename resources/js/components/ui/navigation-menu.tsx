@@ -4,6 +4,7 @@ import { cva } from "class-variance-authority"
 import { ChevronDownIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Link } from "@inertiajs/react"
 
 function NavigationMenu({
   className,
@@ -121,12 +122,18 @@ function NavigationMenuViewport({
   )
 }
 
+// function NavigationMenuLink({
+//   className,
+//   ...props
+// }: React.ComponentProps<typeof NavigationMenuPrimitive.Link>) {
+//   return (
+//     <NavigationMenuPrimitive.Link
 function NavigationMenuLink({
   className,
   ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Link>) {
+}: React.ComponentProps<typeof Link>) {
   return (
-    <NavigationMenuPrimitive.Link
+    <Link
       data-slot="navigation-menu-link"
       className={cn(
         "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active=true]:bg-accent/50 data-[active=true]:text-accent-foreground ring-ring/10 dark:ring-ring/20 dark:outline-ring/40 outline-ring/50 [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
