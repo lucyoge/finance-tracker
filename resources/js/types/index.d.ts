@@ -20,6 +20,7 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    displayMenu?: boolean; // Optional property to control visibility in the sidebar
 }
 
 export interface SharedData {
@@ -34,15 +35,42 @@ export interface SharedData {
 export interface User {
     id: number;
     firstname: string;
-    middlename: string | null;
-    lastname: string | null;
+    lastname: string;
+    phone: string;
+    status: string; // e.g., 'active', 'inactive', etc.
     email: string;
-    phone: string | null;
-    dob: string | null;
-    profile_img: string | null;
-    password: string;
+    profile_picture?: string;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
+    [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface TransactionCategory {
+    id: number;
+    name: string;
+    [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Transaction {
+    id: number;
+    transaction_date: DateTime;
+    amount: number;
+    type: 'income' | 'expense' | 'savings';
+    category: TransactionCategory;
+    payment_method: string;
+    description?: string;
+    user_id: number;
+    user?: User;
+    attachments?: Attachment[];
+    [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Attachment {
+    id: number;
+    file_name: string;
+    file_path: string;
+    file_type: string;
+    transaction_id: number;
     [key: string]: unknown; // This allows for additional properties...
 }

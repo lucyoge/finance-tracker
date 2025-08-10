@@ -3,6 +3,7 @@ import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 import heroImage from "@/assets/auth_bg.png";
+import Logo from "@/assets/logo_white.png";
 
 interface AuthLayoutProps {
     title?: string;
@@ -22,8 +23,12 @@ export default function AuthSplitLayout({ children, title, description }: PropsW
                 <div className="absolute inset-0 bg-gradient-to-r from-corporate-blue/80 via-corporate-blue/60 to-transparent" />
 
                 <Link href={route('home')} className="relative z-20 flex items-center text-lg font-medium">
-                    <AppLogoIcon className="mr-2 size-8 fill-current text-white" />
-                    {name}
+                    <img
+                        src={Logo}
+                        alt="Logo"
+                        className="h-8 fill-current text-black sm:h-12"
+                    />
+                    <span className="ml-2 text-white">Fin<span className="text-corporate-gold-light">Track</span></span>
                 </Link>
                 {quote && (
                     <div className="relative z-20 mt-auto">

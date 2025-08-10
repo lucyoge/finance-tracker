@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Logo from "@/assets/logo_white.png";
 import { LogIn, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Link, usePage } from "@inertiajs/react";
 import { SharedData } from "@/types";
+import AppLogoIcon from "../app-logo-icon";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +35,7 @@ const Header = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Brand Name */}
         <div className="flex items-center space-x-2">
+          <img src={Logo} alt="Logo" className="h-8 w-8" />
           <h1 className="text-3xl font-bold text-white">Fin<span className="text-corporate-gold-light">Track</span> </h1>
         </div>
 
