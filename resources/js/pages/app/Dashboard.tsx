@@ -2,7 +2,7 @@ import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { SharedData, type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Bell, CalendarIcon, Handshake, Phone, ReceiptText, Repeat, Target, User } from 'lucide-react';
+import { Bell, CalendarIcon, Handshake, Phone, PieChart, ReceiptText, Repeat, Target, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -61,8 +61,8 @@ export default function Dashboard() {
                             <h3 className="text-xs md:text-sm font-medium">Transactions</h3>
                         </div>
                     </Link>
-                    <Link href={`#`} className="border inline-flex flex-grow md:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg bg-white/50 backdrop-blur-2xl shadow-sm">
-                        <Target className="h-5 w-5 text-corporate-blue" />
+                    <Link href={route('budgeting')} className="border inline-flex flex-grow md:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg bg-white/50 backdrop-blur-2xl shadow-sm">
+                        <PieChart className="h-5 w-5 text-corporate-blue" />
                         <div className="flex-1">
                             <h3 className="text-xs md:text-sm font-medium">Budgeting</h3>
                         </div>

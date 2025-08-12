@@ -24,6 +24,7 @@ class TransactionController extends Controller
     {
         $validate = Validator::make($request->all(), [
             'category' => 'required|string|max:255',
+            'type' => 'required|string'
         ]);
 
         if ($validate->fails()) {
@@ -33,6 +34,7 @@ class TransactionController extends Controller
         }
 
         $category = new Category();
+        $category->type = strtolower($request->type);
         $category->name = strtolower($request->category);
         $category->save();
 
@@ -51,7 +53,7 @@ class TransactionController extends Controller
 
     public function fetchTransactions(Request $request)
     {
-        if ($request->has('type') && in_array(strtolower($request->type), ['income', 'expense', 'savings'])) {
+        if ($request->has('type') && in_array(strtolower($request->type), ['income', 'expenses', 'savings'])) {
             $transactions = $request->user()->transactions()
                 ->where('type', strtolower($request->type))
                 ->with('category')
@@ -93,14 +95,9 @@ class TransactionController extends Controller
 
         // Find category with name
         $category = Category::where('name', $request->category)->first();
-        if (!$category) {
-            return $this->errorResponse("Category not found", [
-                'errors' => "Category not found"
-            ], 422);
-        }
 
         $transaction = $request->user()->transactions()->create([
-            'category_id' => $category->id,
+            'category_id' => $category ? $category->id : null,
             'amount' => $request->amount,
             'type' => strtolower($request->type),
             'transaction_date' => $request->transaction_date,

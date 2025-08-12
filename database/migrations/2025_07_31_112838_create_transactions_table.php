@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->dateTime('transaction_date');
             $table->decimal('amount', 15, 2);
-            $table->enum('type', ['income', 'expense', 'savings']);
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade')->nullable();
+            $table->enum('type', ['income', 'expenses', 'savings']);
+            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
             $table->string('payment_method')->nullable();
             $table->string('description')->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');

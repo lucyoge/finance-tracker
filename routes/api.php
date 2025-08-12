@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('add-budget', [BudgetController::class, 'addBudget'])->name('api.add-budget');
         Route::put('update-budget/{id}', [BudgetController::class, 'updateBudget'])->name('api.update-budget');
         Route::delete('delete-budget/{id}', [BudgetController::class, 'deleteBudget'])->name('api.delete-budget');
+        Route::get('fetch-budget-chart-data', [BudgetController::class, 'budgetChartData'])->name('api.fetch-budget-chart-data');
     });
 });
 

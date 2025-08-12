@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import CustomModal from '@/components/custom/CustomModal';
 import TransactionForm from '@/components/custom/TransactionForm';
 import TransactionDetails from '@/components/custom/TransactionDetails';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useFormattedValue } from '@/hooks/useFormattedValue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -51,10 +53,11 @@ export default function ManageTransactions() {
     const [transactions, setTransactions] = useState<TransactionPagination>();
     const [fetching, setFetching] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
-    type Category = { id: number; name: string };
+    type Category = { id: number; name: string, type: string };
     const [categories, setCategories] = useState<Category[]>([]);
     const [showCategories, setShowCategories] = useState(false);
     const [currentType, setCurrentType] = useState('all');
+    const formattedValue = useFormattedValue();
 
     // State for form errors and processing
     const [errors, setErrors] = useState({});
@@ -205,25 +208,25 @@ export default function ManageTransactions() {
                 </section>
 
                 <section className='flex gap-3 flex-wrap md:flex-nowrap mb-3 md:mb-5'>
-                    <div onClick={() => {setCurrentType('all'); fetchTransactions('all');}} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'all' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
+                    <div onClick={() => { setCurrentType('all'); fetchTransactions('all'); }} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'all' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
                         <Repeat className={`h-5 w-5 ${currentType == 'all' ? 'text-white' : 'text-corporate-blue'}`} />
                         <div className={`md:flex-1 ${currentType == 'all' ? 'flex-1' : 'hidden sm:inline'}`}>
                             <h3 className="text-xs md:text-sm font-medium">All</h3>
                         </div>
                     </div>
-                    <div onClick={() => {setCurrentType('income'); fetchTransactions('income');}} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'income' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
+                    <div onClick={() => { setCurrentType('income'); fetchTransactions('income'); }} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'income' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
                         <ArrowDownCircle className={`h-5 w-5 ${currentType == 'income' ? 'text-green-300' : 'text-green-500'}`} />
                         <div className={`md:flex-1 ${currentType == 'income' ? 'flex-1' : 'hidden sm:inline'}`}>
                             <h3 className="text-xs md:text-sm font-medium">Income</h3>
                         </div>
                     </div>
-                    <div onClick={() => {setCurrentType('expense'); fetchTransactions('expense');}} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'expense' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
-                        <ArrowUpCircle className={`h-5 w-5 ${currentType == 'expense' ? 'text-red-400' : 'text-red-500'}`} />
+                    <div onClick={() => { setCurrentType('expense'); fetchTransactions('expenses'); }} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'expense' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
+                        <ArrowUpCircle className={`h-5 w-5 ${currentType == 'expenses' ? 'text-red-400' : 'text-red-500'}`} />
                         <div className={`md:flex-1 ${currentType == 'expense' ? 'flex-1' : 'hidden sm:inline'}`}>
-                            <h3 className="text-xs md:text-sm font-medium">Expense</h3>
+                            <h3 className="text-xs md:text-sm font-medium">Expenses</h3>
                         </div>
                     </div>
-                    <div onClick={() => {setCurrentType('savings'); fetchTransactions('savings');}} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'savings' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
+                    <div onClick={() => { setCurrentType('savings'); fetchTransactions('savings'); }} role='button' className={`border cursor-pointer inline-flex flex-grow sm:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg backdrop-blur-2xl shadow-sm ${currentType == 'savings' ? 'bg-corporate-blue text-white' : 'bg-white/50'}`}>
                         <PiggyBank className={`h-5 w-5 ${currentType == 'savings' ? 'text-white' : 'text-corporate-blue'}`} />
                         <div className={`md:flex-1 ${currentType == 'savings' ? 'flex-1' : 'hidden sm:inline'}`}>
                             <h3 className="text-xs md:text-sm font-medium">Savings</h3>
@@ -258,18 +261,20 @@ export default function ManageTransactions() {
                                         <td className="py-2 px-4">
                                             <div className="flex items-center">
                                                 {transaction.type === 'income' && (
-                                                    <ArrowDownCircle className="h-5 w-5 text-green-500 capitalize" />
+                                                    <ArrowDownCircle className="h-5 w-5 text-green-500 capitalize flex-shrink-0" />
                                                 )}
-                                                {transaction.type === 'expense' && (
-                                                    <ArrowUpCircle className="h-5 w-5 text-red-500 capitalize" />
+                                                {transaction.type === 'expenses' && (
+                                                    <ArrowUpCircle className="h-5 w-5 text-red-500 capitalize flex-shrink-0" />
                                                 )}
                                                 {transaction.type === 'savings' && (
-                                                    <PiggyBank className="h-5 w-5 text-yellow-500 capitalize" />
+                                                    <PiggyBank className="h-5 w-5 text-corporate-blue capitalize flex-shrink-0" />
                                                 )}
-                                                <span className="ml-2">{transaction.type}</span>
+                                                <div className="ml-2 font-medium capitalize">
+                                                    {transaction.type} {transaction?.category && (<span className="text-corporate-blue lowercase text-xs">({transaction?.category.name})</span>)}
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="py-2 px-4">{transaction.amount.toLocaleString('en-UK', { style: 'currency', currency: 'GBP' })}</td>
+                                        <td className="py-2 px-4">{ formattedValue(transaction.amount, true, "GBP") }</td>
                                         <td className="py-2 px-4 line-clamp-1 hidden lg:table-cell">{new Date(transaction.transaction_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
                                         <td className="py-2 px-4">
                                             <div className="flex items-start gap-2">
@@ -284,29 +289,31 @@ export default function ManageTransactions() {
                                     </tr>)}
                                 </tbody>
                             </table>
-                            <div className="md:hidden text-left text-sm">
+                            <div className="md:hidden text-left text-sm overflow-x-auto">
                                 {transactions?.data.map((transaction: Transaction) => (
                                     <div key={transaction.id} className="flex items-center justify-between gap-4 py-2 px-4 not-last:border-b border-corporate-blue/50">
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1 items-center flex gap-2">
                                                 {transaction.type === 'income' && (
-                                                    <ArrowDownCircle className="h-5 w-5 text-green-500 capitalize" />
+                                                    <ArrowDownCircle className="h-5 w-5 text-green-500 capitalize flex-shrink-0" />
                                                 )}
-                                                {transaction.type === 'expense' && (
-                                                    <ArrowUpCircle className="h-5 w-5 text-red-500 capitalize" />
+                                                {transaction.type === 'expenses' && (
+                                                    <ArrowUpCircle className="h-5 w-5 text-red-500 capitalize flex-shrink-0" />
                                                 )}
                                                 {transaction.type === 'savings' && (
-                                                    <PiggyBank className="h-5 w-5 text-yellow-500 capitalize" />
+                                                    <PiggyBank className="h-5 w-5 text-corporate-blue capitalize flex-shrink-0" />
                                                 )}
-                                                <span className="font-medium">{transaction.type}</span>
+                                                <div className="ml-2 font-medium capitalize leading-3">
+                                                    {transaction.type} {transaction?.category && (<span className="text-corporate-blue lowercase text-xs">({transaction?.category.name})</span>)}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1">
-                                                <span className="font-medium">{transaction.amount.toLocaleString('en-UK', { style: 'currency', currency: 'GBP' })}</span>
+                                                <span className="font-medium">{ formattedValue(transaction.amount, true, "GBP") }</span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 justify-end">
                                             <Button onClick={() => { setShowTransactionDetails(true); setSelectedTransaction(transaction); }} variant="ghost" className="text-corporate-blue hover:text-corporate-blue/90">
                                                 <Eye className="h-5 w-5" />
                                             </Button>
@@ -400,7 +407,7 @@ export default function ManageTransactions() {
 
             {/* Category Modal */}
             <section>
-                <CustomModal show={showCategories} maxWidth="sm">
+                <CustomModal show={showCategories} maxWidth="md">
                     <section className="flex flex-col max-h-screen sm:max-h-[90vh]">
                         <header className="">
                             <div className="py-2 px-4 flex justify-between items-center">
@@ -426,6 +433,18 @@ export default function ManageTransactions() {
                             <section className="px-4 py-2">
                                 <form onSubmit={addCategory}>
                                     <div className='rounded-lg border border-slate-200 shadow-md dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center'>
+                                        <Select
+                                            name="type"
+                                            defaultValue='Expenses'
+                                        >
+                                            <SelectTrigger className='border-0'>
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Income">Income</SelectItem>
+                                                <SelectItem value="Expenses">Expenses</SelectItem>                                                <SelectItem value="Savings">Savings</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <input
                                             type="text"
                                             name="category"
@@ -447,7 +466,9 @@ export default function ManageTransactions() {
                                 {(categories && categories.length > 0) && categories.map((category, index) => (
                                     <li className='px-4 py-2' key={index}>
                                         <div className="flex items-center justify-between">
-                                            <span className='capitalize'>{category.name}</span>
+                                            <div className='capitalize'>
+                                                {category.name} <small className='ml-1 text-slate-500 text-xs lowercase'>({category.type})</small>
+                                            </div>
                                             <button onClick={() => deleteCategory(category.id)} className='text-red-500 hover:text-red-700 py-2 px-3'>
                                                 <Trash2 className='text-xs' size={18} />
                                             </button>

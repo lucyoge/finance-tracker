@@ -119,6 +119,7 @@ export default function TransactionForm({ onSubmit, errors, processing }: Transa
                             id="transaction_date"
                             name="transaction_date"
                             type="date"
+                            max={new Date().toISOString().split('T')[0]} // Prevent future dates
                             required
                             value={formData.transaction_date}
                             onChange={handleChange}
@@ -127,7 +128,7 @@ export default function TransactionForm({ onSubmit, errors, processing }: Transa
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="amount">Amount ($)*</Label>
+                        <Label htmlFor="amount">Amount (£)*</Label>
                         <Input
                             id="amount"
                             name="amount"
@@ -145,35 +146,43 @@ export default function TransactionForm({ onSubmit, errors, processing }: Transa
                             name="type"
                             value={formData.type}
                             onValueChange={(value) => setFormData({ ...formData, type: value })}
+                            defaultValue='Income'
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Income">Income</SelectItem>
-                                <SelectItem value="Expense">Expense</SelectItem>
+                                <SelectItem value="Expenses">Expenses</SelectItem>
                                 <SelectItem value="Savings">Savings</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="category">Category*</Label>
+                        <Label htmlFor="category">Category</Label>
                         <Select
                             name="categories"
                             value={formData.category}
                             onValueChange={(value) => setFormData({ ...formData, category: value })}
-                            required
                         >
                             <SelectTrigger className='capitalize'>
                                 <SelectValue placeholder="Select categories" />
                             </SelectTrigger>
                             <SelectContent className='capitalize'>
-                                {categories.map((category) => (
-                                    <SelectItem key={category.id} value={category.name}>
-                                        {category.name}
-                                    </SelectItem>
-                                ))}
+                                {(() => {
+                                    const filteredCategories = categories.filter(
+                                        (category) => category.type === formData.type.toLowerCase()
+                                    );
+                                    if (filteredCategories.length === 0) {
+                                        return <SelectItem value=" " disabled>No Category</SelectItem>;
+                                    }
+                                    return filteredCategories.map((category) => (
+                                        <SelectItem key={category.id} value={category.name}>
+                                            {category.name}
+                                        </SelectItem>
+                                    ));
+                                })()}
                             </SelectContent>
                         </Select>
                     </div>

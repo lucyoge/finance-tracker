@@ -9,29 +9,7 @@ import {
 } from "recharts"
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart"
-
-
-// export interface ChartRadialTextProps {
-//     data: { label: string; value: number; maxValue?: number; fill?: string }[]
-//     config?: ChartConfig,
-//     size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
-// }
-
-// export function ChartRadialText({
-//     data = [
-//         { label: "budget", value: 200, fill: "#000000" },
-//     ],
-//     config = {
-//         visitors: {
-//             label: "Visitors",
-//         },
-//         safari: {
-//             label: "Safari",
-//             color: "var(--chart-2)",
-//         },
-//     },
-//     size = "md",
-// }: ChartRadialTextProps) {
+import { da } from "date-fns/locale";
 
 export interface ChartRadialTextProps {
     data: { label: string; value?: number; maxValue?: number; percentage?: number; fill?: string }[]
@@ -45,17 +23,9 @@ export interface ChartRadialTextProps {
 
 export function ChartRadialText({
     data = [
-        { label: "safari", value: 200, percentage: 50, fill: "bg-red-500" },
+        { label: "budget", value: 200, percentage: 50, fill: "green" },
     ],
-    config = {
-        visitors: {
-            label: "Visitors",
-        },
-        safari: {
-            label: "Safari",
-            color: "var(--chart-2)",
-        },
-    },
+    config = {},
     size = "md",
     showPercentage = true,
     showLabel = true,
@@ -105,7 +75,9 @@ export function ChartRadialText({
     };
 
     // Calculate endAngle based on the percentage which is 360 degrees for 100%
-    const endAngle = data[0].percentage ? (data[0].percentage / 100) * 360 : 360;
+    const percentage = data[0]?.percentage;
+    const isValidPercentage = typeof percentage === 'number' && !isNaN(percentage);
+    const endAngle = isValidPercentage ? (percentage / 100) * 360 : 0;
 
     return (
         <div className="flex flex-col">
@@ -145,7 +117,7 @@ export function ChartRadialText({
                                                     y={viewBox.cy}
                                                     className={`fill-foreground text-${size === "sm" ? "xl" : size === "md" ? "2xl" : size === "lg" ? "3xl" : size === "xl" ? "4xl" : "5xl"} font-bold`}
                                                 >
-                                                    {(showPercentage && data[0].percentage) ? data[0].percentage.toLocaleString() + "%" : formattedValue(data[0].value)}
+                                                    {(showPercentage && data[0].percentage !== undefined) ? data[0].percentage.toLocaleString() + "%" : formattedValue(data[0].value)}
                                                 </tspan>
                                                 {showLabel && <tspan
                                                     x={viewBox.cx}
@@ -153,7 +125,7 @@ export function ChartRadialText({
                                                     className={`fill-muted-foreground text-${(size === "sm" || size === "md") ? "xs" : size === "lg" ? "md" : size === "xl" ? "lg" : "2xl"} font-medium`}
                                                 >
                                                     {data[0].label}
-                                                </tspan> }
+                                                </tspan>}
                                             </text>
                                         )
                                     }

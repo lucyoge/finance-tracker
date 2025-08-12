@@ -129,7 +129,7 @@ export default function BudgetForm({ onSubmit, errors, processing }: BudgetFormP
                             <SelectContent>
                                 <SelectItem value="Savings">Savings</SelectItem>
                                 <SelectItem value="Investment">Investment</SelectItem>
-                                <SelectItem value="Expense">Expense</SelectItem>
+                                <SelectItem value="Expenses">Expenses</SelectItem>
                                 <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
@@ -157,7 +157,7 @@ export default function BudgetForm({ onSubmit, errors, processing }: BudgetFormP
                         <InputError message={errors.period} />
                     </div>
 
-                    {formData.period === 'Custom' && (<>
+                    {formData.period === 'custom' && (<>
                         <div className="grid gap-2">
                             <Label htmlFor="start_date">Start Date*</Label>
                             <Input

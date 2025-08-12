@@ -56,7 +56,7 @@ export interface Transaction {
     id: number;
     transaction_date: DateTime;
     amount: number;
-    type: 'income' | 'expense' | 'savings';
+    type: 'income' | 'expenses' | 'savings';
     category: TransactionCategory;
     payment_method: string;
     description?: string;
@@ -73,4 +73,17 @@ export interface Attachment {
     file_type: string;
     transaction_id: number;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Budget {
+    id: number;
+    user_id: number;
+    category_id: number;
+    amount: number;
+    period?: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom' | null;
+    purpose?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    auto_reset: boolean;
+    [key: string]: unknown;
 }
