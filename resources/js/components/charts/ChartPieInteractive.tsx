@@ -25,37 +25,45 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { format } from "path"
+
+import { useFormattedValue } from "@/hooks/useFormattedValue"
+
 
 export function ChartPieInteractive({ title, description, chartData, chartConfig } : { title?: string, description?: string, chartData: any[], chartConfig: ChartConfig }) {
-    if (!chartData || chartData.length === 0) {
-        return <div className="text-center text-muted-foreground">No data available</div>
+    // Defensive: If chartData is missing or empty, show message
+    if (!Array.isArray(chartData) || chartData.length === 0) {
+        return <div className="text-center text-muted-foreground">No data available</div>;
     }
-    const id = "pie-interactive"
-    const [activeMonth, setActiveMonth] = React.useState(chartData[0].label)
-    const formattedValue = (value: number | undefined) => {
-        if (value === undefined) return "0";
-        return Number(value).toLocaleString('en-UK', {
-            style: 'currency',
-            currency: 'GBP',
-            maximumFractionDigits: 0,
-        });
-    };
+
+    // Ensure 'values' is a number for recharts compatibility
+    const safeChartData = chartData.map(item => ({
+        ...item,
+        values: typeof item.values === 'string' ? parseFloat(item.values) : item.values
+    }));
+
+    const id = "pie-interactive";
+    const [activeMonth, setActiveMonth] = React.useState(safeChartData[0]?.label ?? "");
+    const formattedValue = useFormattedValue();
 
     const activeIndex = React.useMemo(
-        () => chartData.findIndex((item) => item.label === activeMonth),
-        [activeMonth]
-    )
-    const labels = React.useMemo(() => chartData.map((item) => item.label), [])
+        () => safeChartData.findIndex((item) => item.label === activeMonth),
+        [activeMonth, safeChartData]
+    );
+    const labels = React.useMemo(() => safeChartData.map((item) => item.label), [safeChartData]);
+
+    // Defensive: If activeIndex is invalid, fallback to 0
+    const safeActiveIndex = activeIndex >= 0 ? activeIndex : 0;
 
     return (
-        <Card data-chart={id} className="flex flex-col">
+        <Card data-chart={id} className="flex flex-col shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50">
             {/* <ChartStyle id={id} config={chartConfig} /> */}
             <CardHeader className="flex-row items-start space-y-0 pb-0">
-                {(title || description) && <div className="grid gap-1">
-                    <CardTitle>{title}</CardTitle>
-                    {description && <CardDescription>{description}</CardDescription>}
-                </div>}
+                {(title || description) && (
+                    <div className="grid gap-1">
+                        <CardTitle>{title}</CardTitle>
+                        {description && <CardDescription>{description}</CardDescription>}
+                    </div>
+                )}
                 <Select value={activeMonth} onValueChange={setActiveMonth}>
                     <SelectTrigger
                         className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
@@ -65,12 +73,8 @@ export function ChartPieInteractive({ title, description, chartData, chartConfig
                     </SelectTrigger>
                     <SelectContent align="end" className="rounded-xl">
                         {labels.map((key) => {
-                            const config = chartConfig[key as keyof typeof chartConfig]
-
-                            if (!config) {
-                                return null
-                            }
-
+                            const config = chartConfig[key as keyof typeof chartConfig];
+                            if (!config) return null;
                             return (
                                 <SelectItem
                                     key={key}
@@ -80,14 +84,12 @@ export function ChartPieInteractive({ title, description, chartData, chartConfig
                                     <div className="flex items-center gap-2 text-xs">
                                         <span
                                             className="flex h-3 w-3 shrink-0 rounded-xs"
-                                            style={{
-                                                backgroundColor: `${config.color}`,
-                                            }}
+                                            style={{ backgroundColor: `${config.color}` }}
                                         />
                                         {config?.label}
                                     </div>
                                 </SelectItem>
-                            )
+                            );
                         })}
                     </SelectContent>
                 </Select>
@@ -104,12 +106,12 @@ export function ChartPieInteractive({ title, description, chartData, chartConfig
                             content={<ChartTooltipContent hideLabel />}
                         />
                         <Pie
-                            data={chartData}
+                            data={safeChartData}
                             dataKey="values"
                             nameKey="label"
                             innerRadius={60}
                             strokeWidth={5}
-                            activeIndex={activeIndex}
+                            activeIndex={safeActiveIndex}
                             activeShape={({
                                 outerRadius = 0,
                                 ...props
@@ -126,7 +128,12 @@ export function ChartPieInteractive({ title, description, chartData, chartConfig
                         >
                             <Label
                                 content={({ viewBox }) => {
-                                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                    if (
+                                        viewBox &&
+                                        "cx" in viewBox &&
+                                        "cy" in viewBox &&
+                                        safeChartData[safeActiveIndex]
+                                    ) {
                                         return (
                                             <text
                                                 x={viewBox.cx}
@@ -139,18 +146,19 @@ export function ChartPieInteractive({ title, description, chartData, chartConfig
                                                     y={viewBox.cy}
                                                     className="fill-foreground text-3xl font-bold"
                                                 >
-                                                    {formattedValue(chartData[activeIndex].values)}
+                                                    {formattedValue(safeChartData[safeActiveIndex].values, true, "GBP")}
                                                 </tspan>
                                                 <tspan
                                                     x={viewBox.cx}
                                                     y={(viewBox.cy || 0) + 24}
                                                     className="fill-muted-foreground"
                                                 >
-                                                    {chartData[activeIndex].label}
+                                                    {safeChartData[safeActiveIndex].label}
                                                 </tspan>
                                             </text>
-                                        )
+                                        );
                                     }
+                                    return null;
                                 }}
                             />
                         </Pie>
@@ -158,5 +166,5 @@ export function ChartPieInteractive({ title, description, chartData, chartConfig
                 </ChartContainer>
             </CardContent>
         </Card>
-    )
+    );
 }

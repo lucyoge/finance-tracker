@@ -16,6 +16,7 @@ import { ChartRadialText } from '@/components/charts/ChartRadialText';
 import { Card, CardContent } from '@/components/ui/card';
 import BudgetCard from '@/components/custom/BudgetCard';
 import BudgetSummaryChart from '@/components/custom/BudgetSummaryChart';
+import { ca } from 'date-fns/locale';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,6 +33,7 @@ export default function Budgeting() {
     const user = usePage<SharedData>().props.auth.user;
     const [showAddModal, setShowAddModal] = useState(false);
     const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [refreshBudgetSummary, setRefreshBudgetSummary] = useState(false);
     // Define the type for each budget purpose object
     type BudgetPurposeData = {
         total_amount: number;
@@ -57,7 +59,6 @@ export default function Budgeting() {
             if (response.status === 200) {
                 setBudgets(response.data.body.budgets);
                 setBudgetOnPurpose(response.data.body.budgets_on_purpose);
-                console.log(response.data.body.budgets_on_purpose);
             }
         } catch (error) {
             console.error('Error fetching budgets:', error);
@@ -77,6 +78,7 @@ export default function Budgeting() {
                         setShowAddModal(false);
                         fetchBudgets();
                         setErrors({});
+                        setRefreshBudgetSummary(!refreshBudgetSummary); // Toggle to refresh the summary chart
                     }
                 })
                 .catch(error => {
@@ -122,7 +124,7 @@ export default function Budgeting() {
 
                 <section className="flex gap-3 flex-wrap md:flex-nowrap">
                     <aside className='md:flex-2/5'>
-                        <BudgetSummaryChart />
+                        <BudgetSummaryChart refresh={refreshBudgetSummary} />
                     </aside>
                     <aside className='md:flex-3/5'>
                         <div>
@@ -136,31 +138,51 @@ export default function Budgeting() {
                             const [categoryName, categoryData] = Object.entries(purposeObj)[0];
                             const total = categoryData?.total_amount || 0;
                             const spent = categoryData?.total_spent || 0;
+                            const saved = categoryData?.total_saved || 0;
+                            const extraSaved = categoryData?.extra_saved || 0;
                             const remaining = categoryData?.remaining || 0;
-                            const percentage = total > 0 ? Math.round((spent / total) * 100) : 0;
+                            const percentage = categoryData?.purpose === 'Savings' ? (saved > 0 ? Math.round((saved / total) * 100) : 0) : (spent > 0 ? Math.round((spent / total) * 100) : 0);
                             return (
                                 <Card className="gap-4 p-0 mb-4" key={purposeKey}>
                                     <CardContent className="flex items-center gap-3 py-1 px-4">
                                         <div className='w-24'>
-                                            <ChartRadialText
-                                                size='md'
-                                                data={[{
-                                                    label: categoryName,
-                                                    value: spent,
-                                                    percentage: percentage,
-                                                    fill: "#ff0000" // You can customize color per category if needed
-                                                }]} />
+                                            { categoryData.purpose === 'Savings' ? (
+                                                <ChartRadialText
+                                                    size='md'
+                                                    data={[{
+                                                        label: categoryName,
+                                                        value: saved,
+                                                        percentage: percentage,
+                                                        fill: (saved > 99) ? "#008000" : (saved > 50) ? "#ff9800" : "#ff0000" // #008000 is a darker green
+                                                    }]} />
+                                            ) : (
+                                                <ChartRadialText
+                                                    size='md'
+                                                    data={[{
+                                                        label: categoryName,
+                                                        value: spent,
+                                                        percentage: percentage,
+                                                        fill: (spent > 99) ? "#008000" : (spent > 50) ? "#ff9800" : "#ff0000"
+                                                    }]} />
+                                            )}
                                         </div>
                                         <aside className='flex-1 flex justify-between items-start gap-3'>
                                             <div>
-                                                <span className="capitalize">{categoryName}</span>
+                                                <span className="capitalize"> Total {categoryName}</span>
                                                 <h3 className='text-lg font-semibold'>
                                                     {total.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}
                                                 </h3>
-                                                <div className="text-xs text-muted-foreground mt-1">
-                                                    <span>Spent: {spent.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}</span><br />
-                                                    <span>Remaining: {remaining.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}</span>
-                                                </div>
+                                                {categoryData.purpose === 'Savings' ? (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                        <span>Saved: {saved.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}</span><br />
+                                                        <span>Extra Saved: {extraSaved.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                        <span>Spent: {spent.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}</span><br />
+                                                        <span>Remaining: {remaining.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className='flex items-center justify-between mt-2'>
                                                 <DropdownMenu>
@@ -172,14 +194,14 @@ export default function Budgeting() {
                                                             <Plus className="mr-2 h-4 w-4" />
                                                             Add New Budget
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem>
+                                                        {/* <DropdownMenuItem>
                                                             <ReceiptText className="mr-2 h-4 w-4" />
                                                             View Budget Report
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem>
                                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                                             Set Budget Period
-                                                        </DropdownMenuItem>
+                                                        </DropdownMenuItem> */}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>

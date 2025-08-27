@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, Banknote, Fence, Warehouse, LibraryBig, Target, LineChart, PieChart, Repeat } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Banknote, Fence, Warehouse, LibraryBig, Target, LineChart, PieChart, Repeat, MessageCircleReply } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const footerNavItems: NavItem[] = [
@@ -40,15 +40,20 @@ export function AppSidebar() {
             icon: PieChart,
         },
         {
-            title: 'Goals',
-            href: '/goals',
-            icon: Target,
+            title: 'Feedback',
+            href: '/feedback',
+            icon: MessageCircleReply,
         },
-        {
-            title: 'Analytics & Reports',
-            href: '/analytics-reports',
-            icon: LineChart,
-        },
+        // {
+        //     title: 'Goals',
+        //     href: '/goals',
+        //     icon: Target,
+        // },
+        // {
+        //     title: 'Analytics & Reports',
+        //     href: '/analytics-reports',
+        //     icon: LineChart,
+        // },
     ];
     return (
         <Sidebar collapsible="icon" variant="floating">

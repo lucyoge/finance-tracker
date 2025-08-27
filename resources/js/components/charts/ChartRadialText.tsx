@@ -71,7 +71,7 @@ export function ChartRadialText({
                 return value.toLocaleString();
             }
         }
-        return value?.toLocaleString();
+        return value?.toLocaleString(undefined, { maximumFractionDigits: 1 });
     };
 
     // Calculate endAngle based on the percentage which is 360 degrees for 100%
@@ -117,7 +117,7 @@ export function ChartRadialText({
                                                     y={viewBox.cy}
                                                     className={`fill-foreground text-${size === "sm" ? "xl" : size === "md" ? "2xl" : size === "lg" ? "3xl" : size === "xl" ? "4xl" : "5xl"} font-bold`}
                                                 >
-                                                    {(showPercentage && data[0].percentage !== undefined) ? data[0].percentage.toLocaleString() + "%" : formattedValue(data[0].value)}
+                                                    {(showPercentage && data[0].percentage !== undefined) ? formattedValue(data[0].percentage) + "%" : formattedValue(data[0].value)}
                                                 </tspan>
                                                 {showLabel && <tspan
                                                     x={viewBox.cx}

@@ -2,7 +2,7 @@ import httpClient from '@/lib/axios';
 import React, { useEffect, useState } from 'react'
 import { ChartPieInteractive } from '../charts/ChartPieInteractive';
 
-const BudgetSummaryChart = () => {
+const BudgetSummaryChart = ({refresh} : {refresh: boolean}) => {
     const [chartData, setChartData] = useState([]);
     const [chartConfig, setChartConfig] = useState({});
     const [id, setId] = useState('');
@@ -22,7 +22,7 @@ const BudgetSummaryChart = () => {
     };
     useEffect(() => {
         fetchChartData();
-    }, []);
+    }, [refresh]);
     return (
         <div>
             { chartData.length > 0 && <ChartPieInteractive chartData={chartData} chartConfig={chartConfig} title='Categories - Summary' description='Total budgetted amount' /> }

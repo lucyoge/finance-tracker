@@ -1,10 +1,16 @@
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
-import { SharedData, type BreadcrumbItem } from '@/types';
+import { SharedData, Transaction, type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Bell, CalendarIcon, Handshake, Phone, PieChart, ReceiptText, Repeat, Target, User } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Bell, CalendarIcon, Handshake, Phone, PieChart, PiggyBank, ReceiptText, Repeat, Target, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import BudgetSummaryChart from '@/components/custom/BudgetSummaryChart';
+import { use, useEffect, useState } from 'react';
+import httpClient from '@/lib/axios';
+import { useFormattedValue } from '@/hooks/useFormattedValue';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ChartAreaGradient } from '@/components/charts/ChartAreaGradient';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -15,6 +21,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Dashboard() {
     const user = usePage<SharedData>().props.auth.user;
+    const [transactions, setTransactions] = useState([]);
+    const [chartData, setChartData] = useState(null);
+    const [fetching, setFetching] = useState(false);
+    const [notifications, setNotifications] = useState(0);
+    const formattedValue = useFormattedValue();
+
+    const fetchAnalysis = async () => {
+        setFetching(true);
+        const response = await httpClient.get(route('api.fetch-dashboard-analysis'));
+        setChartData(response.data.body.analysis);
+        setNotifications(response.data.body.unread_notifications);
+        const transactionsResponse = await httpClient.get(route('api.fetch-dashboard-transactions'));
+        setTransactions(transactionsResponse.data.body.transactions);
+        setFetching(false);
+    };
+
+    useEffect(() => {
+        fetchAnalysis();
+    }, []);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
@@ -67,32 +93,152 @@ export default function Dashboard() {
                             <h3 className="text-xs md:text-sm font-medium">Budgeting</h3>
                         </div>
                     </Link>
-                    <Link href={`#`} className="border inline-flex flex-grow md:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg bg-white/50 backdrop-blur-2xl shadow-sm">
+                    <Link href={route('notifications')} className="border inline-flex flex-grow md:flex-grow-0 items-center justify-between gap-2 py-2 px-4 rounded-lg bg-white/50 backdrop-blur-2xl shadow-sm relative">
                         <Bell className="h-5 w-5 text-corporate-blue" />
                         <div className="flex-1">
                             <h3 className="text-xs md:text-sm font-medium">Notifications</h3>
+                            {notifications > 0 && (
+                                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                                    {notifications}
+                                </span>
+                            )}
                         </div>
                     </Link>
                 </section>
                 <section className='grid gap-5 lg:grid-cols-5'>
-                    <aside className='lg:col-span-3 min-h-10 rounded-xl shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50 p-4'>
-                        <div className="flex flex-col items-center justify-center h-full py-10">
-                            <span className="text-4xl mb-4">🔄</span>
-                            <h4 className="text-lg font-semibold mb-2 text-slate-700">No transaction yet</h4>
-                            <p className="text-sm text-slate-500 text-center">
-                                You have not recorded any transactions yet. Once you do, your transaction history will appear here.
-                            </p>
-                        </div>
-                    </aside>
-                    <aside className='lg:col-span-2 min-h-10 rounded-xl shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50 p-4'>
-                        <div className="flex flex-col items-center justify-center h-full py-10">
+                    <aside className='lg:col-span-3 min-h-10 rounded-xl shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50 mb-4 lg:mb-10'>
+                        {(chartData && chartData != null) ? (
+                            <div>
+                                <ChartAreaGradient />
+                            </div>
+                        ) : <div className="flex flex-col items-center justify-center h-full p-4 py-10">
                             <span className="text-4xl mb-4">📊</span>
                             <h4 className="text-lg font-semibold mb-2 text-slate-700">No Analysis and Report</h4>
                             <p className="text-sm text-slate-500 text-center">
                                 You have not generated any reports yet. Your analysis and reports will be displayed here once available.
                             </p>
-                        </div>
+                        </div>}
                     </aside>
+
+                    <aside className='lg:col-span-2 min-h-10 mb-4 lg:mb-10'>
+                        <BudgetSummaryChart />
+                    </aside>
+
+                    {transactions.length === 0 ? (
+                        <div className='lg:col-span-5'>
+                            {fetching ? (
+                                <section className="flex flex-col gap-4 p-4 md:py-8 lg:col-span-3 min-h-10 rounded-xl shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50 max-w-full overflow-x-auto">
+                                    <table className="w-full">
+                                        <tbody>
+                                            {Array.from({ length: 2 }).map((_, i) => (
+                                                <tr key={i} className="border-b border-corporate-blue/50">
+                                                    <td className="pl-4 pr-2 py-2">
+                                                        <Skeleton className="h-4 w-28" />
+                                                    </td>
+                                                    <td className="px-2 py-2">
+                                                        <Skeleton className="h-4 w-28" />
+                                                    </td>
+                                                    <td className="px-2 py-2">
+                                                        <Skeleton className="h-4 w-28" />
+                                                    </td>
+                                                    <td className="px-2 py-2">
+                                                        <Skeleton className="h-4 w-28" />
+                                                    </td>
+                                                    <td className="px-2 py-2">
+                                                        <Skeleton className="h-4 w-28" />
+                                                    </td>
+                                                    <td className="px-2 py-2">
+                                                        <Skeleton className="h-4 w-28" />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </section>
+                            ) : (
+                                <aside className='lg:col-span-5 min-h-10 rounded-xl shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50 p-4'>
+                                    <div className="flex flex-col items-center justify-center h-full py-10">
+                                        <span className="text-4xl mb-4">🔄</span>
+                                        <h4 className="text-lg font-semibold mb-2 text-slate-700">No transaction yet</h4>
+                                        <p className="text-sm text-slate-500 text-center">
+                                            You have not recorded any transactions yet. Once you do, your transaction history will appear here.
+                                        </p>
+                                    </div>
+                                </aside>)}
+                        </div>
+                    ) : (<section className='lg:col-span-5 flex flex-col'>
+                        <div className='flex justify-between items-center pb-4 px-2 w-full'>
+                            <span className='text-sm font-bold'>
+                                Recent Transaction Records
+                            </span>
+                            <span className='text-sm'>
+                                <Link href={route('manage_transactions')} className="text-corporate-blue">
+                                    View All
+                                </Link>
+                            </span>
+                        </div>
+
+                        {transactions && transactions.length > 0 && (<aside className='min-h-10 flex-grow rounded-xl shadow-2xl bg-white/50 backdrop-blur-2xl border border-corporate-blue/50'>
+                            <table className="w-full table-auto hidden md:table">
+                                <thead className="text-left border-b border-corporate-blue/50">
+                                    <tr>
+                                        <th className="py-2 px-4">Type</th>
+                                        <th className="py-2 px-4">Amount</th>
+                                        <th className="py-2 px-4 hidden md:table-cell">Transaction Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {transactions.map((transaction: Transaction) => <tr key={transaction.id} className="not-last:border-b border-corporate-blue/50 text-left">
+                                        <td className="py-2 px-4">
+                                            <div className="flex items-center">
+                                                {transaction.type === 'income' && (
+                                                    <ArrowDownCircle className="h-5 w-5 text-green-500 capitalize flex-shrink-0" />
+                                                )}
+                                                {transaction.type === 'expenses' && (
+                                                    <ArrowUpCircle className="h-5 w-5 text-red-500 capitalize flex-shrink-0" />
+                                                )}
+                                                {transaction.type === 'savings' && (
+                                                    <PiggyBank className="h-5 w-5 text-corporate-blue capitalize flex-shrink-0" />
+                                                )}
+                                                <div className="ml-2 font-medium capitalize">
+                                                    {transaction.type} {transaction?.category && (<span className="text-corporate-blue lowercase text-xs">({transaction?.category.name})</span>)}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-2 px-4">{formattedValue(transaction.amount, true, "GBP")}</td>
+                                        <td className="py-2 px-4 line-clamp-1 hidden md:table-cell">{new Date(transaction.transaction_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                                    </tr>)}
+                                </tbody>
+                            </table>
+                            <div className="md:hidden text-left text-sm overflow-x-auto">
+                                {transactions.map((transaction: Transaction) => (
+                                    <div key={transaction.id} className="flex items-center justify-between gap-4 py-2 px-4 not-last:border-b border-corporate-blue/50">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 items-center flex gap-2">
+                                                {transaction.type === 'income' && (
+                                                    <ArrowDownCircle className="h-5 w-5 text-green-500 capitalize flex-shrink-0" />
+                                                )}
+                                                {transaction.type === 'expenses' && (
+                                                    <ArrowUpCircle className="h-5 w-5 text-red-500 capitalize flex-shrink-0" />
+                                                )}
+                                                {transaction.type === 'savings' && (
+                                                    <PiggyBank className="h-5 w-5 text-corporate-blue capitalize flex-shrink-0" />
+                                                )}
+                                                <div className="ml-2 font-medium capitalize leading-3">
+                                                    {transaction.type} {transaction?.category && (<span className="text-corporate-blue lowercase text-xs">({transaction?.category.name})</span>)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                                <span className="font-medium">{formattedValue(transaction.amount, true, "GBP")}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>)}
+                    </section>)}
                 </section>
             </div>
         </AppLayout>

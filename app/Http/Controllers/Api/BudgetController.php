@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Transaction;
 use App\Models\User;
-use App\Traits\ResponseTrait;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+use App\Traits\ResponseTrait;
+use App\Http\Controllers\Controller;
+use App\Notifications\BudgetNotification;
 use Illuminate\Support\Facades\Validator;
 
 class BudgetController extends Controller
@@ -28,14 +29,24 @@ class BudgetController extends Controller
                 ->whereBetween('transaction_date', [$budget->start_date, $budget->end_date])
                 ->sum('amount');
 
+            $category = $budget->category;
             $percentage = ($spent / $budget->amount) * 100;
             $budget->spent = $spent;
             $budget->remaining = $budget->amount - $spent;
             $budget->progress_color = ($percentage < 70) ? "#4caf50" : (($percentage < 90) ? "#ff9800" : "#f44336");
             $budget->percentage = $percentage;
+
+            // Check and send notification on the category if almost or exceeds budget
+            $totalBudget = $budget->amount;
+            if ($budget->remaining <= 0) {
+                // Send notification for exceeding budget
+                $request->user()->notify(new BudgetNotification($category->name, $totalBudget, $budget->remaining, 'exceeded'));
+            } elseif ($budget->remainingt <= 100) {
+                // Send notification for almost exceeding budget
+                $request->user()->notify(new BudgetNotification($category->name, $totalBudget, $budget->remaining, 'almost exceeded'));
+            }
         }
 
-        $budgetsOnPurpose['emergency'] = $this->fetchBudgetsOnPurpose($request->user(), 'Emergency');
         $budgetsOnPurpose['savings'] = $this->fetchBudgetsOnPurpose($request->user(), 'Savings');
         $budgetsOnPurpose['expenses'] = $this->fetchBudgetsOnPurpose($request->user(), 'Expenses');
 
@@ -47,28 +58,55 @@ class BudgetController extends Controller
 
     private function fetchBudgetsOnPurpose(User $user, string $purpose)
     {
-        $budget = $user->budgets()
-            ->where('purpose', $purpose)
-            ->selectRaw('coalesce(sum(amount), 0) as total_amount, min(start_date) as start_date, max(end_date) as end_date')
-            ->first();
+        // Sum all budgets for the given purpose
+        $budgets = $user->budgets()->where('purpose', $purpose)->get();
+        $total_amount = $budgets->sum('amount');
+        $start_date = $budgets->min('start_date');
+        $end_date = $budgets->max('end_date');
 
-        $categoryIds = $user->budgets()
-            ->where('purpose', $purpose)
-            ->distinct()
-            ->pluck('category_id')
-            ->toArray();
+        // Get all category IDs for this purpose
+        $categoryIds = $budgets->pluck('category_id')->unique()->toArray();
 
-        $spent = Transaction::whereIn('category_id', $categoryIds)
-            ->whereBetween('transaction_date', [$budget->start_date, $budget->end_date])
-            ->sum('amount');
+        // Fetch all transactions for these categories
+        $transactions = Transaction::whereIn('category_id', $categoryIds);
+        if ($start_date && $end_date) {
+            $transactions = $transactions->whereBetween('transaction_date', [$start_date, $end_date]);
+        }
 
-        return [
-            "$purpose" => [
-                'total_amount' => $budget->total_amount,
-                'total_spent' => $spent,
-                'remaining' => $budget->total_amount - $spent
-            ]
-        ];
+        // For Savings, 'total_spent' means 'saved', for Expenses, it means 'spent'
+        if ($purpose === 'Savings') {
+            $total_budget = $total_amount;
+            $total_saved = $transactions->sum('amount');
+            $extra_saved = $total_saved > $total_budget ? $total_saved - $total_budget : 0;
+
+            return [
+                "$purpose" => [
+                    'total_amount' => $total_amount,
+                    'total_saved' => $total_saved,
+                    'extra_saved' => $extra_saved,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'budgets' => $budgets,
+                    'purpose' => $purpose
+                ]
+            ];
+        } else if ($purpose === 'Expenses') {
+            $total_budget = $total_amount;
+            $total_spent = $transactions->sum('amount');
+            $remaining_budget = $total_budget - $total_spent;
+
+            return [
+                "$purpose" => [
+                    'total_amount' => $total_amount,
+                    'total_spent' => $total_spent,
+                    'remaining_budget' => $remaining_budget,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'budgets' => $budgets,
+                    'purpose' => $purpose
+                ]
+            ];
+        }
     }
 
     public function addBudget(Request $request)

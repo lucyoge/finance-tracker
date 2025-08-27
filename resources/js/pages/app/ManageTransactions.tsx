@@ -2,7 +2,7 @@ import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { Transaction, SharedData, type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { ArrowDownCircle, ArrowLeft, ArrowUpCircle, CalendarIcon, Eye, Fence, FenceIcon, Handshake, Home, Hotel, Phone, PiggyBank, Plus, ReceiptText, Repeat, Trash, Trash2, User, UserCheck, UserPlus, Users, X } from 'lucide-react';
+import { ArrowDownCircle, ArrowLeft, ArrowUpCircle, CalendarIcon, Eye, Fence, FenceIcon, Filter, Handshake, Home, Hotel, Phone, PiggyBank, Plus, ReceiptText, Repeat, Trash, Trash2, User, UserCheck, UserPlus, Users, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import TransactionForm from '@/components/custom/TransactionForm';
 import TransactionDetails from '@/components/custom/TransactionDetails';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFormattedValue } from '@/hooks/useFormattedValue';
+import { Input } from '@/components/ui/input';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -58,6 +59,8 @@ export default function ManageTransactions() {
     const [showCategories, setShowCategories] = useState(false);
     const [currentType, setCurrentType] = useState('all');
     const formattedValue = useFormattedValue();
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // State for form errors and processing
     const [errors, setErrors] = useState({});
@@ -168,6 +171,19 @@ export default function ManageTransactions() {
         fetchCategories();
     }, []);
 
+    const filterTransactions = async (type: string = currentType) => {
+        setFetching(true);
+        const response = await httpClient.get(route('api.filter-transactions', { type, start_date:startDate, end_date: endDate }));
+        if (response.status !== 200) {
+            console.error('Failed to fetch transactions');
+            return;
+        }
+        setTransactions(response.data.body.transactions);
+        console.log(response.data.body.transactions);
+
+        setFetching(false);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manage Properties" />
@@ -230,6 +246,27 @@ export default function ManageTransactions() {
                         <PiggyBank className={`h-5 w-5 ${currentType == 'savings' ? 'text-white' : 'text-corporate-blue'}`} />
                         <div className={`md:flex-1 ${currentType == 'savings' ? 'flex-1' : 'hidden sm:inline'}`}>
                             <h3 className="text-xs md:text-sm font-medium">Savings</h3>
+                        </div>
+                    </div>
+                    <div className='flex-grow sm:flex-grow-0 ml-auto'>
+                        <div className="flex gap-2">
+                            <Input
+                                type="date"
+                                placeholder="Start Date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-32"
+                            />
+                            <Input
+                                type="date"
+                                placeholder="End Date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-32"
+                            />
+                            <Button variant={"corporate"} onClick={() => filterTransactions()} className="w-24 bg-corporate-blue/90 text-white">
+                                <Filter className="h-5 w-5" /> Filter
+                            </Button>
                         </div>
                     </div>
                 </section>
@@ -442,7 +479,8 @@ export default function ManageTransactions() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="Income">Income</SelectItem>
-                                                <SelectItem value="Expenses">Expenses</SelectItem>                                                <SelectItem value="Savings">Savings</SelectItem>
+                                                <SelectItem value="Expenses">Expenses</SelectItem>
+                                                <SelectItem value="Savings">Savings</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <input

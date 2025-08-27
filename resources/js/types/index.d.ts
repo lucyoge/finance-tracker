@@ -35,12 +35,14 @@ export interface SharedData {
 export interface User {
     id: number;
     firstname: string;
+    middlename?: string;
     lastname: string;
     phone: string;
     status: string; // e.g., 'active', 'inactive', etc.
     email: string;
-    profile_picture?: string;
+    profile_img?: File | string;
     email_verified_at: string | null;
+    dob: string | null;
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...

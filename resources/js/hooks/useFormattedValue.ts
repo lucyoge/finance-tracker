@@ -39,6 +39,6 @@ export function useFormattedValue() {
                 return value.toLocaleString();
             }
         }
-        return value?.toLocaleString();
+        return value?.toLocaleString(undefined, { maximumFractionDigits: 0 });
     }, []);
 }

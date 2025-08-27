@@ -33,7 +33,10 @@ export default function Password() {
 
         put(route('password.update'), {
             preserveScroll: true,
-            onSuccess: () => reset(),
+            onSuccess: () => {
+                reset('password', 'password_confirmation');
+                alert('Password updated successfully.');
+            },
             onError: (errors) => {
                 if (errors.password) {
                     reset('password', 'password_confirmation');
@@ -108,7 +111,7 @@ export default function Password() {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save password</Button>
+                            <Button variant="gold" disabled={processing}>Save password</Button>
 
                             <Transition
                                 show={recentlySuccessful}

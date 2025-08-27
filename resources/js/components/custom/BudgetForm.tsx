@@ -128,9 +128,7 @@ export default function BudgetForm({ onSubmit, errors, processing }: BudgetFormP
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Savings">Savings</SelectItem>
-                                <SelectItem value="Investment">Investment</SelectItem>
                                 <SelectItem value="Expenses">Expenses</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
                         <InputError message={errors.purpose} />

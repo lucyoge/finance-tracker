@@ -29,7 +29,7 @@
                 background-color: oklch(0.145 0 0);
             }
         </style>
-
+        @PwaHead
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
         <link rel="icon" href="/favicon.png" type="image/png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -44,5 +44,6 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+        @RegisterServiceWorkerScript
     </body>
 </html>

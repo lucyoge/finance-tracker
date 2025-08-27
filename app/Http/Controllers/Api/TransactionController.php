@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Notifications\BudgetNotification;
 use App\Traits\ResponseTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -70,6 +72,103 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function filterTransactions(Request $request)
+    {
+        if ($request->has('type') && in_array(strtolower($request->type), ['income', 'expenses', 'savings'])) {
+            $transactions = $request->user()->transactions()
+                ->where('type', strtolower($request->type))
+                ->whereBetween('transaction_date', [$request->start_date, $request->end_date])
+                ->with('category')
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+        } else {
+            $transactions = $request->user()->transactions()
+                ->whereBetween('transaction_date', [$request->start_date, $request->end_date])
+                ->with('category')
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+        }
+
+        return $this->successResponse('Transactions fetched successfully', [
+            'transactions' => $transactions
+        ]);
+    }
+
+    public function fetchDashboardTransactions(Request $request)
+    {
+        $transactions = $request->user()->transactions()
+            ->with('category')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return $this->successResponse('Dashboard transactions fetched successfully', [
+            'transactions' => $transactions
+        ]);
+    }
+
+    public function fetchChartData(Request $request)
+    {
+        // Start analysis from last 6 months
+        $startMonth = Carbon::now()->subMonths(6)->format('Y-m');
+        $chartData = [];
+
+        for ($i = 0; $i < 6; $i++) {
+            $month = Carbon::parse($startMonth)->addMonths($i);
+            $monthKey = $month->format('M');
+
+            $expenses = $request->user()->transactions()
+                ->where('type', 'expenses')
+                ->whereYear('transaction_date', $month->year)
+                ->whereMonth('transaction_date', $month->month)
+                ->sum('amount');
+
+            $income = $request->user()->transactions()
+                ->where('type', 'income')
+                ->whereYear('transaction_date', $month->year)
+                ->whereMonth('transaction_date', $month->month)
+                ->sum('amount');
+
+            $chartData[$i] = [
+                'month' => $monthKey,
+                'expenses' => (float)$expenses,
+                'income' => (float)$income,
+            ];
+        }
+
+        $chartConfig = [
+            'expenses' => [
+                'label' => "Expenses",
+                'color' => "var(--chart-1)",
+            ],
+            'income' => [
+                'label' => "Income",
+                'color' => "var(--chart-2)",
+            ],
+        ];
+
+        return $this->successResponse('Chart data fetched successfully', [
+            'chart_data' => $chartData,
+            'chart_config' => $chartConfig,
+        ]);
+    }
+
+    public function fetchDashboardAnalysis(Request $request)
+    {
+        $analysis = $request->user()->transactions()
+            ->selectRaw('SUM(CASE WHEN type = "income" THEN amount ELSE 0 END) as total_income')
+            ->selectRaw('SUM(CASE WHEN type = "expenses" THEN amount ELSE 0 END) as total_expenses')
+            ->selectRaw('SUM(CASE WHEN type = "savings" THEN amount ELSE 0 END) as total_savings')
+            ->first();
+
+        $unreadNotifications = $request->user()->notifications()->where('read_at', null)->count();
+
+        return $this->successResponse('Dashboard analysis fetched successfully', [
+            'analysis' => $analysis,
+            'unread_notifications' => $unreadNotifications
+        ]);
+    }
+
     public function addTransaction(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -105,6 +204,19 @@ class TransactionController extends Controller
             'attachments' => $attachments,
             'description' => $request->description
         ]);
+
+        // Check and send notification on the category if almost or exceeds budget
+        $totalBudget = $category->budget()->sum('amount');
+        if ($category && $category->budget) {
+            $remainingBudget = $totalBudget - $category->transactions()->sum('amount');
+            if ($remainingBudget <= 0) {
+                // Send notification for exceeding budget
+                $request->user()->notify(new BudgetNotification($category->name, $totalBudget, $remainingBudget, 'exceeded'));
+            } elseif ($remainingBudget <= 100) {
+                // Send notification for almost exceeding budget
+                $request->user()->notify(new BudgetNotification($category->name, $totalBudget, $remainingBudget, 'almost exceeded'));
+            }
+        }
 
         return $this->successResponse('Transaction added successfully', [
             'transaction' => $transaction
